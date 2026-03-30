@@ -1,0 +1,14 @@
+{
+  "name": "com.nexus.buildpro",
+  "version": "1.0.0",
+  "displayName": "NexusBuildPro",
+  "description": "Enterprise-grade cross-platform build orchestration framework with real-time profiling, optimization pipeline, and advanced analytics dashboard.",
+  "unity": "2021.3",
+  "unityRelease": "0f1",
+  "documentationUrl": "",
+  "changelogUrl": "",
+  "licensesUrl": "",
+  "dependencies": {},
+  "keywords": ["build", "pipeline", "cross-platform", "optimization", "profiling"],
+  "author": { "name": "NexusBuildPro" }
+}
