@@ -11,10 +11,28 @@ namespace NexusBuildPro.Editor.UI
     /// Supports line charts, bar charts, pie charts, area charts, and timeline/Gantt views.
     /// All methods are immediate-mode — call inside OnGUI.
     /// </summary>
+    [InitializeOnLoad]
     public static class ChartRenderer
     {
         #region Materials
         private static Material _glMaterial;
+
+        // Ensures the GL material is released before a domain reload, otherwise Unity
+        // logs "Cleaning up leaked objects in scene since no game object, component or
+        // manager is referencing them" for the Internal-Colored material.
+        static ChartRenderer()
+        {
+            AssemblyReloadEvents.beforeAssemblyReload += DisposeMaterial;
+            EditorApplication.quitting += DisposeMaterial;
+        }
+
+        private static void DisposeMaterial()
+        {
+            if (_glMaterial == null) return;
+            UnityEngine.Object.DestroyImmediate(_glMaterial);
+            _glMaterial = null;
+        }
+
         private static Material GLMat
         {
             get

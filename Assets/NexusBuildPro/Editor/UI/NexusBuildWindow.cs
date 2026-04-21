@@ -55,11 +55,6 @@ namespace NexusBuildPro.Editor.UI
         private string _buildStepName = "Ready";
         private float _animTime;
         private bool _isInitialized;
-
-        // Build trigger flag — set in OnGUI, consumed in OnEditorUpdate (outside player loop)
-        private bool _pendingBuildTrigger;
-        private BuildProfile _pendingProfile;
-        private IPlatformBuildStrategy _pendingStrategy;
         #endregion
 
         #region Tab Definitions
@@ -657,18 +652,36 @@ namespace NexusBuildPro.Editor.UI
         #endregion
     }
 
-    /// <summary>Registry that instantiates all available platform strategies.</summary>
+    /// <summary>
+    /// Discovers all concrete <see cref="BasePlatformBuildStrategy"/> subclasses via
+    /// <see cref="TypeCache"/>. Adding a new platform = drop a new subclass into the
+    /// project; no edits to the registry required (Open/Closed).
+    /// </summary>
     public static class BuildStrategyRegistry
     {
-        public static List<IPlatformBuildStrategy> GetAllStrategies() => new()
+        public static List<IPlatformBuildStrategy> GetAllStrategies()
         {
-            new WindowsBuildStrategy(),
-            new MacOSBuildStrategy(),
-            new LinuxBuildStrategy(),
-            new AndroidBuildStrategy(),
-            new iOSBuildStrategy(),
-            new WebGLBuildStrategy(),
-        };
+            var list = new List<IPlatformBuildStrategy>();
+            var types = TypeCache.GetTypesDerivedFrom<BasePlatformBuildStrategy>();
+
+            foreach (var t in types)
+            {
+                if (t.IsAbstract) continue;
+                try
+                {
+                    if (Activator.CreateInstance(t) is IPlatformBuildStrategy strategy)
+                        list.Add(strategy);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"[NexusBuildPro] Failed to instantiate strategy {t.Name}: {ex.Message}");
+                }
+            }
+
+            // Stable alphabetical ordering so the tile grid is deterministic across reloads.
+            list.Sort((a, b) => string.Compare(a.PlatformName, b.PlatformName, StringComparison.Ordinal));
+            return list;
+        }
     }
 }
 #endif

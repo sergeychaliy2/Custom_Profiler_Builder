@@ -15,6 +15,15 @@ namespace NexusBuildPro.Editor.Steps
     /// </summary>
     public sealed class AssetOptimizationStep : IBuildStep
     {
+        // Heuristic per-asset savings estimates. These are upper-bound guesses for
+        // the UI dashboard — not accurate accounting. Kept as constants so the numbers
+        // are visible in one place instead of hidden in the loop body.
+        private const long TextureDownscaleSavingsBytes = 1024 * 1024;   // ~1 MB per downsized tex
+        private const long AudioQualityReductionSavings = 512 * 1024;    // ~512 KB per re-encoded clip
+        private const int TextureMaxSizeCap = 2048;
+        private const float AudioQualityThreshold = 0.7f;
+        private const float AudioQualityTarget = 0.65f;
+
         public string StepName => "Asset Optimization";
         public int Order => 20;
         public bool IsEnabled { get; set; } = true;
@@ -80,14 +89,14 @@ namespace NexusBuildPro.Editor.Steps
                     changed = true;
                 }
 
-                // Ensure max size is sane (don't go above 2048 for mobile-friendly)
+                // Clamp max size for a mobile-friendly upper bound.
                 var platformSettings = importer.GetDefaultPlatformTextureSettings();
-                if (platformSettings.maxTextureSize > 2048)
+                if (platformSettings.maxTextureSize > TextureMaxSizeCap)
                 {
-                    platformSettings.maxTextureSize = 2048;
+                    platformSettings.maxTextureSize = TextureMaxSizeCap;
                     importer.SetPlatformTextureSettings(platformSettings);
                     changed = true;
-                    saved += 1024 * 1024; // rough estimate
+                    saved += TextureDownscaleSavingsBytes;
                 }
 
                 if (changed)
@@ -116,12 +125,12 @@ namespace NexusBuildPro.Editor.Steps
                 var settings = importer.defaultSampleSettings;
                 bool changed = false;
 
-                if (settings.quality > 0.7f)
+                if (settings.quality > AudioQualityThreshold)
                 {
-                    settings.quality = 0.65f;
+                    settings.quality = AudioQualityTarget;
                     importer.defaultSampleSettings = settings;
                     changed = true;
-                    saved += 512 * 1024;
+                    saved += AudioQualityReductionSavings;
                 }
 
                 if (changed)

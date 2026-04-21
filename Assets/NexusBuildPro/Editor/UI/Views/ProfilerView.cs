@@ -15,7 +15,6 @@ namespace NexusBuildPro.Editor.UI.Views
     {
         #region Fields
         private readonly BuildOrchestrator _orchestrator;
-        private Vector2 _scroll;
         #endregion
 
         #region Constructor

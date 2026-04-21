@@ -20,7 +20,9 @@ namespace NexusBuildPro.Editor.Core
         public string CurrentStepName { get; private set; } = "Initializing";
         public bool HasErrors { get; private set; }
 
-        public IReadOnlyList<BuildLogEntry> Log => _log;
+        // AsReadOnly() returns a wrapper view; callers cannot cast back to List<T>
+        // and mutate the underlying buffer.
+        public IReadOnlyList<BuildLogEntry> Log => _log.AsReadOnly();
         public IReadOnlyDictionary<string, object> Metadata => _metadata;
         #endregion
 

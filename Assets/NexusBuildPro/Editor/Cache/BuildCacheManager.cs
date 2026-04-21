@@ -36,9 +36,9 @@ namespace NexusBuildPro.Editor.Cache
         /// <summary>Loads the previous manifest and starts a new one.</summary>
         public void BeginSession()
         {
+            EnsureCacheDirectoryExists();
             _previousManifest = LoadManifest();
             _currentManifest = new BuildManifest { CreatedAt = DateTime.UtcNow.ToString("O") };
-            EnsureCacheDirectoryExists();
         }
 
         /// <summary>Returns true if the asset at path has NOT changed since last build.</summary>
@@ -94,6 +94,7 @@ namespace NexusBuildPro.Editor.Cache
             if (_currentManifest == null) return;
             try
             {
+                EnsureCacheDirectoryExists();
                 var json = JsonUtility.ToJson(_currentManifest, prettyPrint: true);
                 File.WriteAllText(ManifestPath, json);
             }
@@ -135,7 +136,12 @@ namespace NexusBuildPro.Editor.Cache
 
         private string ComputeFileHash(string assetPath)
         {
-            var fullPath = Path.Combine(Application.dataPath.Replace("/Assets", ""), assetPath);
+            // assetPath is "Assets/..." relative to project root.
+            // Application.dataPath ends at ".../Assets" — project root is its parent.
+            var projectRoot = Path.GetDirectoryName(Application.dataPath);
+            if (string.IsNullOrEmpty(projectRoot)) return null;
+
+            var fullPath = Path.Combine(projectRoot, assetPath);
             if (!File.Exists(fullPath)) return null;
             try
             {
@@ -155,15 +161,33 @@ namespace NexusBuildPro.Editor.Cache
         #endregion
     }
 
+    /// <summary>
+    /// JsonUtility cannot serialize Dictionary directly, so we round-trip through a List.
+    /// Entries dictionary is the live index; _entryList is the serialized payload.
+    /// </summary>
     [Serializable]
-    internal sealed class BuildManifest
+    internal sealed class BuildManifest : UnityEngine.ISerializationCallbackReceiver
     {
         public string CreatedAt;
-        public SerializableDictionary Entries = new();
-    }
 
-    [Serializable]
-    internal sealed class SerializableDictionary : Dictionary<string, ManifestEntry> { }
+        [SerializeField] private List<ManifestEntry> _entryList = new();
+
+        [NonSerialized]
+        public Dictionary<string, ManifestEntry> Entries = new();
+
+        public void OnBeforeSerialize()
+        {
+            _entryList.Clear();
+            foreach (var kv in Entries) _entryList.Add(kv.Value);
+        }
+
+        public void OnAfterDeserialize()
+        {
+            Entries = new Dictionary<string, ManifestEntry>(_entryList.Count);
+            foreach (var e in _entryList)
+                if (!string.IsNullOrEmpty(e.Path)) Entries[e.Path] = e;
+        }
+    }
 
     [Serializable]
     internal sealed class ManifestEntry

@@ -84,11 +84,12 @@ namespace NexusBuildPro.Editor.Profiling
 
         public float GetSlowestBuildTime()
         {
-            float max = 0f;
+            if (_sessions.Count == 0) return 0f;
+            float max = float.MinValue;
             foreach (var s in _sessions)
                 if (s.Metrics.TotalElapsedSeconds > max)
                     max = s.Metrics.TotalElapsedSeconds;
-            return max;
+            return max == float.MinValue ? 0f : max;
         }
         #endregion
     }

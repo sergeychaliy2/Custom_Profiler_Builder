@@ -17,7 +17,6 @@ namespace NexusBuildPro.Editor.UI.Views
     {
         #region Fields
         private readonly BuildOrchestrator _orchestrator;
-        private Vector2 _scroll;
         private float _animTime;
         #endregion
 
@@ -54,8 +53,10 @@ namespace NexusBuildPro.Editor.UI.Views
             var history = _orchestrator.GetHistory();
             var profiler = _orchestrator.Profiler;
 
-            float cardW = (rect.width - 16f) / 4f;
-            float cardSpacing = (rect.width - cardW * 4f) / 5f;
+            // Fixed-spacing layout: 4 cards with equal gaps. Picking spacing first
+            // and deriving cardW prevents negative spacing on narrow windows.
+            const float cardSpacing = 8f;
+            float cardW = Mathf.Max(60f, (rect.width - cardSpacing * 5f) / 4f);
 
             // Build Status Card
             DrawMetricCard(

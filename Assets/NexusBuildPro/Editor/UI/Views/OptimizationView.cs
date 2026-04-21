@@ -15,9 +15,7 @@ namespace NexusBuildPro.Editor.UI.Views
     {
         #region Fields
         private readonly BuildOrchestrator _orchestrator;
-        private Vector2 _scroll;
         private List<string> _changedAssets;
-        private bool _assetScanDone;
         private float _scanProgress;
         private bool _isScanning;
         #endregion
@@ -92,7 +90,6 @@ namespace NexusBuildPro.Editor.UI.Views
                 {
                     cache.ClearCache();
                     _changedAssets = null;
-                    _assetScanDone = false;
                 }
             }
         }
@@ -178,7 +175,6 @@ namespace NexusBuildPro.Editor.UI.Views
         {
             cache.BeginSession();
             _changedAssets = cache.GetChangedAssets();
-            _assetScanDone = true;
         }
 
         private List<(string Title, string Detail, Color Color)> GetRecommendations()

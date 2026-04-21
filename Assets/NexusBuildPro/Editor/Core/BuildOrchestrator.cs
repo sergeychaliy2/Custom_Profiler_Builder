@@ -80,6 +80,7 @@ namespace NexusBuildPro.Editor.Core
             SubscribeContextEvents(context);
             OnBuildStarted?.Invoke();
             _profiler.Begin(context.SessionId);
+            _cache.BeginSession();
 
             var startTime = DateTime.UtcNow;
             BuildResult result = null;
@@ -164,6 +165,7 @@ namespace NexusBuildPro.Editor.Core
                     sessionId: context.SessionId);
 
                 RecordHistory(profile, strategy, result);
+                _cache.CommitSession();
                 OnBuildCompleted?.Invoke(result);
                 return result;
             }

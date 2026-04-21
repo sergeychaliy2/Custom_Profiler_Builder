@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -28,7 +29,9 @@ namespace NexusBuildPro.Editor.UI
 
         #region Cached Textures
         private static Texture2D _solidWhite;
-        private static Texture2D _roundRect;
+        // Color-keyed 1x1 texture cache — prevents a new Texture2D allocation on every
+        // MakeTex call (previously leaked ~40+ textures per style rebuild).
+        private static readonly Dictionary<Color, Texture2D> _texCache = new();
 
         public static Texture2D SolidWhite
         {
@@ -255,9 +258,13 @@ namespace NexusBuildPro.Editor.UI
 
         public static Texture2D MakeTex(Color color)
         {
+            if (_texCache.TryGetValue(color, out var cached) && cached != null)
+                return cached;
+
             var tex = new Texture2D(1, 1) { hideFlags = HideFlags.DontSave };
             tex.SetPixel(0, 0, color);
             tex.Apply();
+            _texCache[color] = tex;
             return tex;
         }
 
